@@ -2,7 +2,7 @@ import pygame
 import pgzrun
 from video import Video
 from random import randint, choice
-
+from game import Game
 
 TITLE = 'CROSS THE ROAD'
 WIDTH = 480
@@ -10,49 +10,32 @@ HEIGHT = 700
 
 pygame.mixer.init()
 
-def make_car(tracks):
-    track = choice(tracks)
-    car = Actor(choice(car_names), (43+80*track, randint(100, 700)))
-    car.track = track
-    tracks.remove(car.track)
-    car.speed = randint(1, 10)
-    return car, tracks
-
-
+gm = Game(Actor)
+gm.init_lvl(1)
 video = Video('video/chicken_screem.mp4', 'sounds/chicken_screem.mp3')
 # Загрузка изображений
-roads = [Actor('road', topleft=(80, 0)), Actor('road', topleft=(240, 0))]
-grasses = [Actor('grass', topleft=(0, 0)), Actor('grass', topleft=(400, 0))]
-chicken = Actor('chicken', (43, 650))
-car_names = ['car_white', 'car_blue', 'big_track', 'track',
-             'car_yellow', 'car_red', 'car_cyan', 'car_grey']
-
-finsih = Actor('flag/0', (440, 50))
-finsih.time = 0
 
 explosion = Actor('explosion/0', (-100, -100))
 explosion.time = 0
 
-tracks = [1, 2, 3, 4]
-car, tracks = make_car(tracks)
-cars = [car]
-
 state = 'game'
 
 video.play_audio(pygame.mixer)
+
+
 def draw():
     ended = video.play_video(screen)
     if not ended:
         return
-    
-    for grass in grasses:
+
+    for grass in gm.grasses:
         grass.draw()
-    for road in roads:
+    for road in gm.roads:
         road.draw()
-    for car in cars:
+    for car in gm.cars:
         car.draw()
-    finsih.draw()
-    chicken.draw()
+    gm.finish.draw()
+    gm.chicken.draw()
 
     if state == 'pause':
         screen.draw.text('PAUSE', fontsize=60,
@@ -60,7 +43,7 @@ def draw():
                          color='red')
 
     if state == 'win':
-        screen.draw.text('WIN!', fontsize=60,
+        screen.draw.text('WIN! PRESS SPACE', fontsize=60,
                          center=(WIDTH//2, HEIGHT//2),
                          color='green')
     if state == 'loose':
@@ -69,75 +52,77 @@ def draw():
                          color='red')
         explosion.draw()
 
+
 def update(dt):
     global tracks, state
-    finsih.time += dt
-    if finsih.time > 0.1:
-        finsih.time = 0
-        number = int(finsih.image.split('/')[-1])
-        finsih.image = f'flag/{(number + 1) % 10}'
+    gm.finish.time += dt
+    if gm.finish.time > 0.1:
+        gm.finish.time = 0
+        number = int(gm.finish.image.split('/')[-1])
+        gm.finish.image = f'flag/{(number + 1) % 10}'
     if state == 'game':
-        if randint(0, 100) < 10:
-            if tracks:
-                car, tracks = make_car(tracks)
-                cars.append(car)
-
         if keyboard.UP:
-            if chicken.y > 40:
-                chicken.y -= 5
+            if gm.chicken.y > 40:
+                gm.chicken.y -= 5
 
         if keyboard.DOWN:
-            if chicken.y < HEIGHT - 40:
-                chicken.y += 5
+            if gm.chicken.y < HEIGHT - 40:
+                gm.chicken.y += 5
 
-        for car in cars:
+        for car in gm.cars:
             car.y -= car.speed
             if car.bottom < 0:
-                tracks.append(car.track)
-                car.track = choice(tracks)
-                tracks.remove(car.track)
-                car.x = 43+80*car.track
+                gm.tracks.append(car.track)
+                car.track = choice(gm.tracks)
+                gm.tracks.remove(car.track)
+                car.x = 43+car.track
                 car.top = 700
-                car.image = choice(car_names)
-        if chicken.colliderect(finsih):
+                car.image = choice(gm.car_names)
+        if gm.chicken.colliderect(gm.finish):
             state = 'win'
             pygame.mixer.music.load('sounds/win.mp3')
             pygame.mixer.music.play()
-        if chicken.collidelist(cars) != -1:
+        if gm.chicken.collidelist(gm.cars) != -1:
             state = 'loose'
             pygame.mixer.music.load('sounds/car-crash-sound-effect.mp3')
             pygame.mixer.music.play()
-            animate(chicken, y=chicken.y-60, tween='bounce_start_end', duration=1)
-    
+            animate(gm.chicken, y=gm.chicken.y-60,
+                    tween='bounce_start_end', duration=1)
+
     if state == 'loose':
         explosion.time += dt
         if explosion.time > 0.2:
             explosion.time = 0
             index = int(explosion.image.split('/')[-1])
             if index == 0:
-                explosion.pos = chicken.pos # (x, y)
+                explosion.pos = gm.chicken.pos  # (x, y)
                 explosion.image = f'explosion/{index + 1}'
             elif index == 7:
                 #                 x      y
                 explosion.pos = (-100, -100)
             else:
                 explosion.image = f'explosion/{index + 1}'
+    
 
 
 def on_key_down(key):
     global state
     if state == 'game':
         if key == keys.RIGHT:
-            if chicken.x < WIDTH - 43:
-                chicken.x += 80
+            if gm.chicken.x < WIDTH - 43:
+                gm.chicken.x += 80
         if key == keys.LEFT:
-            if chicken.x > 43:
-                chicken.x -= 80
+            if gm.chicken.x > 43:
+                gm.chicken.x -= 80
         if key == keys.SPACE:
             state = 'pause'
             return
     if state == 'pause':
         if key == keys.SPACE:
+            state = 'game'
+    if state == 'win':
+        if key == keys.SPACE:
+            gm.init_lvl(2)
             state = 'game'
 
 

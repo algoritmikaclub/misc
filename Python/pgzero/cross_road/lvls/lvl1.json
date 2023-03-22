@@ -1,0 +1,51 @@
+{
+    "roads": {
+        "coordinates": [
+            [
+                80,
+                0
+            ],
+            [
+                240,
+                0
+            ]
+        ],
+        "tracks": [
+            80,
+            160,
+            240,
+            320
+        ]
+    },
+    "grass": {
+        "coordinates": [
+            [
+                0,
+                0
+            ],
+            [
+                400,
+                0
+            ]
+        ]
+    },
+    "finish": {
+        "coordinates": [
+            440,
+            50
+        ]
+    },
+    "cars": [
+        "car_white",
+        "car_blue",
+        "big_track",
+        "track",
+        "car_yellow",
+        "car_red",
+        "car_cyan",
+        "car_grey"
+    ],
+    "chicken": {
+        "coordinates": [43, 650]
+    }
+}
