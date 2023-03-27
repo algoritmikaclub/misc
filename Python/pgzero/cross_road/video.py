@@ -17,9 +17,10 @@ class Video:
             if self.frame % 2 == 0:
                 stream, video_image = self.video.read()
                 if stream:
+                    video_image = cv2.resize(video_image, (800, 700), interpolation=cv2.INTER_CUBIC)
                     video_surf = pygame.image.frombuffer(
                         video_image.tobytes(), video_image.shape[1::-1], 'BGR')
-                    screen.blit(video_surf, (0, 150))
+                    screen.blit(video_surf, (0, 0))
                 else:
                     self.video_ended = True
             self.frame += 1                    

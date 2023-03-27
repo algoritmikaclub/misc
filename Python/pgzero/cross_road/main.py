@@ -5,7 +5,7 @@ from random import randint, choice
 from game import Game
 
 TITLE = 'CROSS THE ROAD'
-WIDTH = 480
+WIDTH = 800
 HEIGHT = 700
 
 pygame.mixer.init()
@@ -34,6 +34,12 @@ def draw():
         road.draw()
     for car in gm.cars:
         car.draw()
+    for enemy in gm.enemies:
+        enemy.draw()
+    for water in gm.water_sprites:
+        water.draw()
+    for log in gm.logs:
+        log.draw()
     gm.finish.draw()
     gm.chicken.draw()
 
@@ -61,14 +67,8 @@ def update(dt):
         number = int(gm.finish.image.split('/')[-1])
         gm.finish.image = f'flag/{(number + 1) % 10}'
     if state == 'game':
-        if keyboard.UP:
-            if gm.chicken.y > 40:
-                gm.chicken.y -= 5
-
-        if keyboard.DOWN:
-            if gm.chicken.y < HEIGHT - 40:
-                gm.chicken.y += 5
-
+        gm.update_enemies()
+        gm.chicken_move_y(keyboard, HEIGHT)
         for car in gm.cars:
             car.y -= car.speed
             if car.bottom < 0:
@@ -82,7 +82,7 @@ def update(dt):
             state = 'win'
             pygame.mixer.music.load('sounds/win.mp3')
             pygame.mixer.music.play()
-        if gm.chicken.collidelist(gm.cars) != -1:
+        if gm.chicken.collidelist(gm.cars) != -1 or gm.chicken.collidelist(gm.enemies) != -1:
             state = 'loose'
             pygame.mixer.music.load('sounds/car-crash-sound-effect.mp3')
             pygame.mixer.music.play()
@@ -102,18 +102,12 @@ def update(dt):
                 explosion.pos = (-100, -100)
             else:
                 explosion.image = f'explosion/{index + 1}'
-    
 
 
 def on_key_down(key):
     global state
     if state == 'game':
-        if key == keys.RIGHT:
-            if gm.chicken.x < WIDTH - 43:
-                gm.chicken.x += 80
-        if key == keys.LEFT:
-            if gm.chicken.x > 43:
-                gm.chicken.x -= 80
+        gm.chicken_move_x(key, keys, WIDTH)
         if key == keys.SPACE:
             state = 'pause'
             return
